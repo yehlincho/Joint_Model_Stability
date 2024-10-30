@@ -1,3 +1,8 @@
+"""Source:
+Cagiada, Matteo, Sergey Ovchinnikov, and Kresten Lindorff-Larsen. "Predicting absolute protein folding stability using generative models." bioRxiv (2024): 2024-03.
+https://github.com/KULL-Centre/_2024_cagiada_stability
+"""
+
 import os
 
 import time,subprocess,re,sys,shutil
@@ -108,33 +113,37 @@ except FileNotFoundError:
 processed_pdbs = set(df['name'])
 
 for pdb in pdb_ls:
-    name = pdb.replace('.pdb', '')
-    print(name)
-    
-    # Check if the PDB has already been processed
-    if name in processed_pdbs:
-        continue  # Skip already processed PDBs
-    
-    chain_id = 'A'
-    structure = load_structure(f"/home/gridsan/ylcho/DMSV2/dataset/af2_predicted/{pdb}", chain_id)
-    coords_structure, sequence_structure = extract_coords_from_structure(structure)
-    
-    prob_tokens = run_model(coords_structure, sequence_structure, model, chain_target=chain_id)
-    aa_list, wt_scores = score_variants(sequence_structure, prob_tokens, alphabet)
+    try:
+        name = pdb.replace('.pdb', '')
+        print(name)
 
-    dg_IF = np.nansum(wt_scores)
-    dg_kcalmol = a * dg_IF + b
-    
-    # Append a new row to the DataFrame
-    # new_row = {'name': name, 'dg_IF': dg_IF, 'dg_kcalmol': dg_kcalmol}
-    # df = df.append(new_row, ignore_index=True)
-    
-    new_row = {'name': name, 'dg_IF': dg_IF, 'dg_kcalmol': dg_kcalmol}
-    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        # Check if the PDB has already been processed
+        if name in processed_pdbs:
+            continue  # Skip already processed PDBs
 
-    
-    # Save the updated DataFrame to the CSV file
-    df.to_csv('esm_if_dg.csv', index=False)
+        chain_id = 'A'
+        structure = load_structure(f"/home/gridsan/ylcho/DMSV2/dataset/af2_predicted/{pdb}", chain_id)
+        coords_structure, sequence_structure = extract_coords_from_structure(structure)
+
+        prob_tokens = run_model(coords_structure, sequence_structure, model, chain_target=chain_id)
+        aa_list, wt_scores = score_variants(sequence_structure, prob_tokens, alphabet)
+
+        dg_IF = np.nansum(wt_scores)
+        dg_kcalmol = a * dg_IF + b
+
+        # Append a new row to the DataFrame
+        # new_row = {'name': name, 'dg_IF': dg_IF, 'dg_kcalmol': dg_kcalmol}
+        # df = df.append(new_row, ignore_index=True)
+
+        new_row = {'name': name, 'dg_IF': dg_IF, 'dg_kcalmol': dg_kcalmol}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+
+        # Save the updated DataFrame to the CSV file
+        df.to_csv('esm_if_dg.csv', index=False)
+        
+    except:
+        continue
 
 
 

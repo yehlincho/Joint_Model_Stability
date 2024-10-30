@@ -2,12 +2,7 @@ import os
 # import colabdesign
 # from colabdesign.mpnn import mk_mpnn_model, clear_mem
 # from colabdesign.shared.protein import pdb_to_string
-os.chdir('/home/gridsan/ylcho/')
-import os
-# import colabdesign
-# from colabdesign.mpnn import mk_mpnn_model, clear_mem
-# from colabdesign.shared.protein import pdb_to_string
-os.chdir('/home/gridsan/ylcho/DMSV2/')
+os.chdir('/home/jupyter-yehlin/DMSV2/')
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -19,14 +14,9 @@ import seaborn
 import re, tempfile
 
 import argparse
-# from colabdesign.af.contrib import predictz
-# from colabdesign.shared.protein import _np_rmsd
 
 if "hhsuite" not in os.environ['PATH']:
-    os.environ['PATH'] += ":/home/gridsan/ylcho/DMSV2/"
-    
-    
-import os
+    os.environ['PATH'] += ":/home/jupyter-yehlin/DMSV2/"
 import torch
 
 import numpy as np
@@ -42,12 +32,51 @@ from scipy.stats import pearsonr
 import shutil
 import random
 
-
+atom_types = [
+    "N",
+    "CA",
+    "C",
+    "CB",
+    "O",
+    "CG",
+    "CG1",
+    "CG2",
+    "OG",
+    "OG1",
+    "SG",
+    "CD",
+    "CD1",
+    "CD2",
+    "ND1",
+    "ND2",
+    "OD1",
+    "OD2",
+    "SD",
+    "CE",
+    "CE1",
+    "CE2",
+    "CE3",
+    "NE",
+    "NE1",
+    "NE2",
+    "OE1",
+    "OE2",
+    "CH2",
+    "NH1",
+    "NH2",
+    "OH",
+    "CZ",
+    "CZ2",
+    "CZ3",
+    "NZ",
+    "OXT",
+]
 
 order = "ACDEFGHIKLMNPQRSTVWYX"
 amino_acid_to_number = {aa: i for i, aa in enumerate(order)}
 
-def parse_PDB_biounits(x, atoms=["N", "CA", "C", "O", "CB", "CG", "CD1", "CD2", "CE2", "CE3", "NE1", "CZ2", "CZ3", "CH2"], chain='A'):
+# def parse_PDB_biounits(x, atoms=["N", "CA", "C", "O", "CB", "CG", "CD1", "CD2", "CE2", "CE3", "NE1", "CZ2", "CZ3", "CH2"], chain='A'):
+def parse_PDB_biounits(x, atoms=atom_types, chain='A'):
   '''
   input:  x = PDB filename
           atoms = atoms to extract (optional)
@@ -153,13 +182,15 @@ def get_pairs_single(S, contact_pairwise_index):
 
     return true_pairwise_count
 
-def calculate_contacts_and_get_pairwise(xyz, seq, distance_threshold,pairwise_threshold=6):
 
+def calculate_contacts_and_get_pairwise(xyz, seq, distance_lower_threshold, distance_upper_threshold, pairwise_threshold=6):
+    
     dict_coord = {}  # dict to store coordinates. dict_coord[res][atom] = (x, y, z)
     contacting_pairs = []  # List to store pairs of contacting residues as [ires, jres]
 
-    # Precompute distance threshold squared
-    distance_threshold_sq = distance_threshold ** 2
+    # Precompute squared distance thresholds
+    distance_lower_threshold_sq = distance_lower_threshold ** 2
+    distance_upper_threshold_sq = distance_upper_threshold ** 2
 
     for i, (xyz, res) in enumerate(zip(xyz, seq)):
         for atom_num, coords in enumerate(xyz):
@@ -177,29 +208,31 @@ def calculate_contacts_and_get_pairwise(xyz, seq, distance_threshold,pairwise_th
         for j in range(i + 1, len(res_list)):
             jres_coords = res_coords[j]
             distances = np.sum((ires_coords[:, np.newaxis] - jres_coords) ** 2, axis=-1)
-            close_atoms = np.argwhere(distances < distance_threshold_sq)
-            if close_atoms.size > 0 and abs(i-j)>=6:
-                contacting_pairs.append([res_list[i]-1, res_list[j]-1])
+            
+            # Check if any distances are within the specified range
+            within_range_atoms = np.argwhere((distances > distance_lower_threshold_sq) & (distances < distance_upper_threshold_sq))
+            if within_range_atoms.size > 0 and abs(i - j) >= pairwise_threshold:
+                contacting_pairs.append([res_list[i] - 1, res_list[j] - 1])
                 
     print(contacting_pairs)
-                
+    
     S = np.array([amino_acid_to_number[aa] for aa in seq])
     contacting_pairs= np.array(contacting_pairs)
     test_true_pairs = np.zeros(441, dtype=int)
     true_pairwise_count = get_pairs_single(S, contacting_pairs)
     test_true_pairs[:len(true_pairwise_count)] += true_pairwise_count
-
+    
     return test_true_pairs
 
 
 
-def main(directory, output_csv, distance):
+def main(directory, output_csv, distance_lower, distance_upper):
     for file in os.listdir(directory):
         try:
             if file.endswith('.pdb'):
                 file_path = os.path.join(directory, file)
                 xyz, seq = parse_PDB_biounits(file_path)
-                pairwise_count = calculate_contacts_and_get_pairwise(xyz, seq[0],distance)
+                pairwise_count = calculate_contacts_and_get_pairwise(xyz, seq[0],distance_lower, distance_upper)
 
                 df = pd.DataFrame({'name': [file], 'pairwise_count': [pairwise_count]})
 
@@ -218,7 +251,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process PDB files and calculate pairwise counts.')
     parser.add_argument('--directory', type=str, default='dataset/native_protein', help='Directory containing PDB files')
     parser.add_argument('--output_csv', type=str, default='pairwise_counts_native_5A.csv', help='Output CSV file')
-    parser.add_argument('--distance', type=int, default=5, help='contact distance')
+    parser.add_argument('--distance_lower', type=int, default=5, help='contact distance')
+    parser.add_argument('--distance_upper', type=int, default=5, help='contact distance')
     args = parser.parse_args()
 
-    main(args.directory, args.output_csv, args.distance)
+    main(args.directory, args.output_csv, args.distance_lower, args.distance_upper)

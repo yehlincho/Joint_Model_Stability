@@ -1,4 +1,4 @@
-# JointDesign: Joint Protein Design and Stability Prediction
+# JointDesign
 
 A comprehensive toolkit for protein design combining TrROS and TrMRF models and zero shot stability prediction using ESMFold, ESM2, ProteinMPNN models.
 

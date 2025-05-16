@@ -15,7 +15,21 @@ In our protein design approach, we have developed a joint model that combines st
   
 ## Usage
 1. **Installation**: Clone the repository.
+    ```bash
+    chmod +x setup.sh
+    ```
+
 2. **Protein generation Model**: Utilize TrORS/TrMRF/(TrORS+TrMR) for protein generation
+   ```bash
+   # Download model files
+   wget -qnc https://files.ipd.uw.edu/krypton/TrRosetta/models.zip
+   wget -qnc https://files.ipd.uw.edu/krypton/TrRosetta/bkgr_models.zip
+   unzip -qqo models.zip
+   unzip -qqo bkgr_models.zip
+   wget -qnc https://files.ipd.uw.edu/krypton/TrRosetta/model_TrMRF_seqid_retrain_5blocks.npy
+   wget -qnc https://files.ipd.uw.edu/krypton/for_gabe.zip
+   unzip -qqo for_gabe.zip
+   ```
 3. **Folding Stability**: Implement the hybrid scoring function for folding stability prediction.
 4. **Pairwise Potentials**: Check sitewise/pairwise potentials of generated proteins.
 
@@ -36,3 +50,5 @@ We acknowledge the support from MIT for this research.
 ## Contact
 
 For any questions or inquiries, please contact Yehlin Cho at yehlin@mit.edu
+
+# JointDesign

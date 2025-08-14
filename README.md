@@ -17,8 +17,8 @@ A comprehensive toolkit for protein design using joint TrROS/TrMRF models with z
 ## Installation Guide
 1. Clone the repository:
 ```bash
-git clone https://github.com/yehlincho/JointDesign.git
-cd JointDesign
+git clone https://github.com/yehlincho/Joint_Model_Stability.git
+cd Joint_Model_Stability
 ```
 
 2. Run the setup script:

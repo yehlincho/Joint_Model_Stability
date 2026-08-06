@@ -8,6 +8,7 @@ A comprehensive toolkit for protein design using joint TrROS/TrMRF models with z
 - Minimum 16GB RAM
 - 50GB free disk space
 
+
 ### Tested Environments
 - CUDA 12.5
 - Python 3.7

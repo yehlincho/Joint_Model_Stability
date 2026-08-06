@@ -34,6 +34,29 @@ The setup script will:
 - Download stability dataset
 - Set up Jupyter kernel
 
+## Model Weights
+
+The pre-trained design-model weights are hosted on Zenodo.
+Download and unzip them into `design_models/` before running any design notebook.
+
+| Bundle | Contents | Consumed by |
+|--------|----------|-------------|
+| `TrMRF_weights.zip` (~19 MB) | `model_TrMRF_A.npy` (5-block), `model_TrMRF_seqid_retrain_3blocks.npy` (3-block), `model_TrMRF_seqid_retrain_5blocks.npy` (5-block retrain) | `design_models/TrMRF.ipynb`, `models.py` `TrMRF()` |
+| `TrROS_weights.zip` (~162 MB) | trRosetta ensemble `models/model_xa[a-e].npy` (5 models) + background models `bkgr_models/bkgr0[1-5].npy` (5 models) | `design_models/TrROS.ipynb`, `models.py` `mk_design_model()` |
+
+**Zenodo record:** https://sandbox.zenodo.org/records/582524 &nbsp;|&nbsp; **DOI:** [10.5072/zenodo.582524](https://doi.org/10.5072/zenodo.582524)
+
+```bash
+cd design_models
+# after downloading both zips from Zenodo into design_models/
+unzip -o TrMRF_weights.zip   # -> model_TrMRF_*.npy
+unzip -o TrROS_weights.zip   # -> models/ and bkgr_models/
+```
+
+After unzipping, `design_models/` should contain the three `model_TrMRF_*.npy` files plus the `models/` and `bkgr_models/` directories, matching the default `DB_DIR="."` paths in `models.py`.
+
+> Note: the TrROS bundle contains the standard public trRosetta / trDesign weights (originally from `files.ipd.uw.edu`). They are re-hosted here only for a self-contained download; the commented `wget` cell in `TrROS.ipynb` fetches the same files.
+
 ## Demo
 
 ### Running the Demo
